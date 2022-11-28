@@ -2,7 +2,7 @@
 
 void main()
 {
-	//Create a Student class
+	//Create a Student class = True
 	
 	//Define the state and behaviour of the student
 
