@@ -1,64 +1,66 @@
 #include <iostream>
 #include <string>
 #include <SDL.h>
+#include <SDL_image.h>
+#include "Input.h"
+#include "Screen.h"
 
 bool isGameRunning = true;
-SDL_Window* window = nullptr;
-SDL_Renderer* renderer = nullptr;
-
+Screen screen;
+Input input;
 
 int main(int argc, char* argv[])
 {
-	int errorCode = SDL_Init(SDL_INIT_EVERYTHING);
-	
-	if (errorCode == -1)
+	// Initialize 
+	screen.Initialize();
+	screen.CreateWindow();
+
+	// Loading image
+	SDL_Surface* imageData = nullptr;
+		
+	imageData = IMG_Load("../Textures/background.jpg");
+
+	if (!imageData)
 	{
-		std::cout << "SDL did not initialize." << std::endl;
-		system("pause");
-		return 0;
+		std::cout << "Error loading image." << std::endl;
 	}
 
-	window = SDL_CreateWindow("SDL Game Engine", //window title
-		SDL_WINDOWPOS_CENTERED, //x pos
-		SDL_WINDOWPOS_CENTERED, //y pos
-		1280, 720, //resolution
-		0); //flag
+	SDL_Texture* texture = nullptr;
+	texture = SDL_CreateTextureFromSurface(screen.GetRenderer(), imageData);
 
-	if (!window)
+	if (!texture)
 	{
-		std::cout << "Error creating window" << std::endl;
-		system("pause");
-		return 0;
+		std::cout << "Error generating texture from raw image." << std::endl;
 	}
-
-	renderer = SDL_CreateRenderer(window, // the pointer to the window handle (create this first!)
-		-1, //Let SDL find the first available GPU driver
-		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); //Combo for GPU rendering and Vsync
-
-	if (!renderer)
-	{
-		std::cout << "Rendered could not be created." << std::endl;
-		system("pause");
-		return 0;
-	}
-
+	SDL_FreeSurface(imageData);
 	//Main loop ======================================================================================================
-	
 	while (isGameRunning)
 	{
 		//Clear the frame buffer
-		SDL_RenderClear(renderer);
+		screen.Clear();
 
 		//Render great things...
+		input.Update();
+		//input.TrackMousePosition();
+
+		// 1600 x 800
+		SDL_Point centrePoint = { 0, 0 };
+
+		SDL_Rect src = { 0, 0, 1600, 800 };
+		SDL_Rect dst = { 0, 0, 1280, 720 };
+
+		SDL_RenderCopyEx(screen.GetRenderer(), texture, &src, &dst, 0.0, &centrePoint, SDL_FLIP_NONE);
+
 		//Swap the frame buffer	
-		SDL_RenderPresent(renderer);
+		screen.RenderScreen();
+		if (input.IsXPressed())
+		{
+			std::cout << "X got pressed." << std::endl;
+			isGameRunning = false;
+		}
 	}
 
 	//Shutdown =====================================================================================================
-
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-
+	screen.Shutdown();
 	return 0;
 }
